@@ -61,7 +61,7 @@ impl<'tcx> Cx<'tcx> {
                                 expr: self.mirror_expr(expr),
                             },
                             opt_destruction_scope: opt_dxn_ext,
-                            from_hir: hir_id,
+                            from_hir: hir_id.local_id,
                         };
                         Some(self.thir.stmts.push(stmt))
                     }
@@ -119,7 +119,7 @@ impl<'tcx> Cx<'tcx> {
                                 lint_level: LintLevel::Explicit(local.hir_id),
                             },
                             opt_destruction_scope: opt_dxn_ext,
-                            from_hir: hir_id,
+                            from_hir: hir_id.local_id,
                         };
                         Some(self.thir.stmts.push(stmt))
                     }

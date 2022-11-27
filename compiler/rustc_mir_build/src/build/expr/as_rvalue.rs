@@ -121,7 +121,11 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                     LintLevel::Inherited,
                     Some(Safety::BuiltinUnsafe),
                 );
-                let synth_info = SourceInfo { span: expr_span, scope: synth_scope, origin: HirOrigin::Untracked, };
+                let synth_info = SourceInfo {
+                    span: expr_span,
+                    scope: synth_scope,
+                    origin: HirOrigin::Untracked,
+                };
 
                 let size = this.temp(tcx.types.usize, expr_span);
                 this.cfg.push_assign(

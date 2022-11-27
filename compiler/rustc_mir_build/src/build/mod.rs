@@ -649,7 +649,8 @@ fn construct_error<'tcx>(
             safety: Safety::Safe,
         }),
     });
-    let source_info = SourceInfo { span, scope: OUTERMOST_SOURCE_SCOPE, origin: HirOrigin::Untracked, };
+    let source_info =
+        SourceInfo { span, scope: OUTERMOST_SOURCE_SCOPE, origin: HirOrigin::Untracked };
 
     // Some MIR passes will expect the number of parameters to match the
     // function declaration.

@@ -29,7 +29,7 @@ use rustc_data_structures::fx::FxHashSet;
 use rustc_data_structures::graph::dominators::Dominators;
 use rustc_index::bit_set::BitMatrix;
 use rustc_index::vec::{Idx, IndexVec};
-use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
+use rustc_serialize::{Decodable, Encodable};
 use rustc_span::symbol::Symbol;
 use rustc_span::{Span, DUMMY_SP};
 
@@ -598,28 +598,12 @@ impl<D: TyDecoder, T: Decodable<D>> Decodable<D> for ClearCrossCrate<T> {
     }
 }
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, HashStable)]
+pub type FromHir = rustc_hir::ItemLocalId;
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, HashStable, Encodable, Decodable)]
 pub enum HirOrigin {
     Untracked,
-    FromHir(HirId),
-}
-
-impl<E: Encoder> Encodable<E> for HirOrigin {
-    fn encode(&self, e: &mut E) {
-        // XXX: you cannot decode a HirId during incremental compilation.
-        // So if this happens all tracked HirOrigins are lost.
-        (0u8).encode(e);
-    }
-}
-
-impl<D: Decoder> Decodable<D> for HirOrigin {
-    fn decode(d: &mut D,) -> Self {
-        let discr = u8::decode(d);
-        match discr {
-            0u8 => HirOrigin::Untracked,
-            _ => unreachable!(),
-        }
-    }
+    FromHir(FromHir),
 }
 
 /// Grouped information about the source code origin of a MIR entity.
@@ -642,11 +626,11 @@ pub struct SourceInfo {
 impl SourceInfo {
     #[inline]
     pub fn outermost(span: Span) -> Self {
-        SourceInfo { span, scope: OUTERMOST_SOURCE_SCOPE, origin: HirOrigin::Untracked, }
+        SourceInfo { span, scope: OUTERMOST_SOURCE_SCOPE, origin: HirOrigin::Untracked }
     }
 
-    pub fn track_hir_origin(&self, hir_id: HirId) -> Self {
-        SourceInfo { span: self.span, scope: self.scope, origin: HirOrigin::FromHir(hir_id), }
+    pub fn track_hir_origin(&self, from_hir: FromHir) -> Self {
+        SourceInfo { span: self.span, scope: self.scope, origin: HirOrigin::FromHir(from_hir) }
     }
 }
 
@@ -3009,11 +2993,11 @@ mod size_asserts {
     use super::*;
     use rustc_data_structures::static_assert_size;
     // tidy-alphabetical-start
-    static_assert_size!(BasicBlockData<'_>, 152);
-    static_assert_size!(LocalDecl<'_>, 64);
-    static_assert_size!(Statement<'_>, 40);
+    static_assert_size!(BasicBlockData<'_>, 148);
+    static_assert_size!(LocalDecl<'_>, 60);
+    static_assert_size!(Statement<'_>, 38);
     static_assert_size!(StatementKind<'_>, 16);
-    static_assert_size!(Terminator<'_>, 120);
+    static_assert_size!(Terminator<'_>, 116);
     static_assert_size!(TerminatorKind<'_>, 96);
     // tidy-alphabetical-end
 }

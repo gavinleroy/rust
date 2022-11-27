@@ -17,7 +17,7 @@ use rustc_index::newtype_index;
 use rustc_index::vec::IndexVec;
 use rustc_middle::middle::region;
 use rustc_middle::mir::interpret::AllocId;
-use rustc_middle::mir::{self, BinOp, BorrowKind, FakeReadCause, Field, Mutability, UnOp};
+use rustc_middle::mir::{self, BinOp, BorrowKind, FakeReadCause, Field, FromHir, Mutability, UnOp};
 use rustc_middle::ty::adjustment::PointerCast;
 use rustc_middle::ty::subst::SubstsRef;
 use rustc_middle::ty::{self, AdtDef, Ty, UpvarSubsts};
@@ -172,7 +172,7 @@ pub enum BlockSafety {
 pub struct Stmt<'tcx> {
     pub kind: StmtKind<'tcx>,
     pub opt_destruction_scope: Option<region::Scope>,
-    pub from_hir: hir::HirId,
+    pub from_hir: FromHir,
 }
 
 #[derive(Clone, Debug, HashStable)]
@@ -230,7 +230,7 @@ pub struct Expr<'tcx> {
     pub span: Span,
 
     /// HIR node from whence this came.
-    pub from_hir: hir::HirId,
+    pub from_hir: FromHir,
 
     /// kind of expression
     pub kind: ExprKind<'tcx>,
@@ -495,7 +495,7 @@ pub struct Arm<'tcx> {
     pub lint_level: LintLevel,
     pub scope: region::Scope,
     pub span: Span,
-    pub from_hir: hir::HirId,
+    pub from_hir: FromHir,
 }
 
 /// A `match` guard.
@@ -855,11 +855,11 @@ mod size_asserts {
     use super::*;
     // tidy-alphabetical-start
     static_assert_size!(Block, 56);
-    static_assert_size!(Expr<'_>, 72);
+    static_assert_size!(Expr<'_>, 68);
     static_assert_size!(ExprKind<'_>, 40);
     static_assert_size!(Pat<'_>, 72);
     static_assert_size!(PatKind<'_>, 56);
-    static_assert_size!(Stmt<'_>, 56);
+    static_assert_size!(Stmt<'_>, 52);
     static_assert_size!(StmtKind<'_>, 40);
     // tidy-alphabetical-end
 }

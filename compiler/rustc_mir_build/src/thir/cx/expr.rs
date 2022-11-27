@@ -71,7 +71,7 @@ impl<'tcx> Cx<'tcx> {
                 value: self.thir.exprs.push(expr),
                 lint_level: LintLevel::Explicit(hir_expr.hir_id),
             },
-            from_hir: hir_id,
+            from_hir: hir_id.local_id,
         };
 
         // Finally, create a destruction scope, if any.
@@ -87,7 +87,7 @@ impl<'tcx> Cx<'tcx> {
                     value: self.thir.exprs.push(expr),
                     lint_level: LintLevel::Inherited,
                 },
-                from_hir: hir_id,
+                from_hir: hir_id.local_id,
             };
         }
 
@@ -166,7 +166,7 @@ impl<'tcx> Cx<'tcx> {
             Adjust::DynStar => ExprKind::Cast { source: self.thir.exprs.push(expr) },
         };
 
-        Expr { temp_lifetime, ty: adjustment.target, span, kind, from_hir, }
+        Expr { temp_lifetime, ty: adjustment.target, span, kind, from_hir }
     }
 
     /// Lowers a cast expression.
@@ -238,22 +238,33 @@ impl<'tcx> Cx<'tcx> {
 
             let lit = ScalarInt::try_from_uint(discr_offset as u128, size).unwrap();
             let kind = ExprKind::NonHirLiteral { lit, user_ty: None };
-            let offset = self.thir.exprs.push(Expr { temp_lifetime, ty: discr_ty, span, kind, from_hir: hir_id, });
+            let offset = self.thir.exprs.push(Expr {
+                temp_lifetime,
+                ty: discr_ty,
+                span,
+                kind,
+                from_hir: hir_id.local_id,
+            });
 
             let source = match discr_did {
                 // in case we are offsetting from a computed discriminant
                 // and not the beginning of discriminants (which is always `0`)
                 Some(did) => {
                     let kind = ExprKind::NamedConst { def_id: did, substs, user_ty: None };
-                    let lhs =
-                        self.thir.exprs.push(Expr { temp_lifetime, ty: discr_ty, span, kind, from_hir: hir_id, });
+                    let lhs = self.thir.exprs.push(Expr {
+                        temp_lifetime,
+                        ty: discr_ty,
+                        span,
+                        kind,
+                        from_hir: hir_id.local_id,
+                    });
                     let bin = ExprKind::Binary { op: BinOp::Add, lhs, rhs: offset };
                     self.thir.exprs.push(Expr {
                         temp_lifetime,
                         ty: discr_ty,
                         span: span,
                         kind: bin,
-                        from_hir: hir_id,
+                        from_hir: hir_id.local_id,
                     })
                 }
                 None => offset,
@@ -313,7 +324,7 @@ impl<'tcx> Cx<'tcx> {
                         temp_lifetime,
                         span: expr.span,
                         kind: ExprKind::Tuple { fields: self.mirror_exprs(args) },
-                        from_hir: hir_id,
+                        from_hir: hir_id.local_id,
                     };
                     let tupled_args = self.thir.exprs.push(tupled_args);
 
@@ -705,7 +716,7 @@ impl<'tcx> Cx<'tcx> {
                     temp_lifetime,
                     span: self.thir[block].span,
                     kind: ExprKind::Block { block },
-                    from_hir: hir_id,
+                    from_hir: hir_id.local_id,
                 });
                 ExprKind::Loop { body }
             }
@@ -734,7 +745,7 @@ impl<'tcx> Cx<'tcx> {
                         ty: expr_ty,
                         span: expr.span,
                         kind: cast,
-                        from_hir: hir_id,
+                        from_hir: hir_id.local_id,
                     });
                     debug!("make_mirror_unadjusted: (cast) user_ty={:?}", user_ty);
 
@@ -770,7 +781,7 @@ impl<'tcx> Cx<'tcx> {
             hir::ExprKind::Err => unreachable!(),
         };
 
-        Expr { temp_lifetime, ty: expr_ty, span: expr.span, kind, from_hir: hir_id, }
+        Expr { temp_lifetime, ty: expr_ty, span: expr.span, kind, from_hir: hir_id.local_id }
     }
 
     fn user_substs_applied_to_res(
@@ -830,7 +841,13 @@ impl<'tcx> Cx<'tcx> {
             }
         };
         let ty = self.tcx().mk_fn_def(def_id, substs);
-        Expr { temp_lifetime, ty, span, kind: ExprKind::ZstLiteral { user_ty }, from_hir: hir_id, }
+        Expr {
+            temp_lifetime,
+            ty,
+            span,
+            kind: ExprKind::ZstLiteral { user_ty },
+            from_hir: hir_id.local_id,
+        }
     }
 
     fn convert_arm(&mut self, arm: &'tcx hir::Arm<'tcx>) -> ArmId {
@@ -846,7 +863,7 @@ impl<'tcx> Cx<'tcx> {
             lint_level: LintLevel::Explicit(arm.hir_id),
             scope: region::Scope { id: arm.hir_id.local_id, data: region::ScopeData::Node },
             span: arm.span,
-            from_hir: arm.hir_id,
+            from_hir: arm.hir_id.local_id,
         };
         self.thir.arms.push(arm)
     }
@@ -915,7 +932,13 @@ impl<'tcx> Cx<'tcx> {
                     ExprKind::StaticRef { alloc_id, ty, def_id: id }
                 };
                 ExprKind::Deref {
-                    arg: self.thir.exprs.push(Expr { ty, temp_lifetime, span: expr.span, kind, from_hir: hir_id, }),
+                    arg: self.thir.exprs.push(Expr {
+                        ty,
+                        temp_lifetime,
+                        span: expr.span,
+                        kind,
+                        from_hir: hir_id.local_id,
+                    }),
                 }
             }
 
@@ -997,7 +1020,7 @@ impl<'tcx> Cx<'tcx> {
             ty: ref_ty,
             span,
             kind: ExprKind::Call { ty: fun_ty, fun, args, from_hir_call: false, fn_span: span },
-            from_hir: hir_id,
+            from_hir: hir_id.local_id,
         });
 
         // construct and return a deref wrapper `*foo()`
@@ -1030,7 +1053,7 @@ impl<'tcx> Cx<'tcx> {
             ty: var_ty,
             span: closure_expr.span,
             kind: self.convert_var(var_hir_id),
-            from_hir: hir_id,
+            from_hir: hir_id.local_id,
         };
 
         for proj in place.projections.iter() {
@@ -1049,8 +1072,13 @@ impl<'tcx> Cx<'tcx> {
                 }
             };
 
-            captured_place_expr =
-                Expr { temp_lifetime, ty: proj.ty, span: closure_expr.span, kind, from_hir: hir_id, };
+            captured_place_expr = Expr {
+                temp_lifetime,
+                ty: proj.ty,
+                span: closure_expr.span,
+                kind,
+                from_hir: hir_id.local_id,
+            };
         }
 
         captured_place_expr
@@ -1086,7 +1114,7 @@ impl<'tcx> Cx<'tcx> {
                         borrow_kind,
                         arg: self.thir.exprs.push(captured_place_expr),
                     },
-                    from_hir: hir_id,
+                    from_hir: hir_id.local_id,
                 }
             }
         }

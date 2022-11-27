@@ -71,9 +71,14 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                                     None,
                                 );
                                 this.source_scope = variable_scope;
-                                SourceInfo { span: then_expr.span, scope: variable_scope, origin: HirOrigin::FromHir(then_expr.from_hir), }
+                                SourceInfo {
+                                    span: then_expr.span,
+                                    scope: variable_scope,
+                                    origin: HirOrigin::FromHir(then_expr.from_hir),
+                                }
                             } else {
-                                this.source_info(then_expr.span).track_hir_origin(then_expr.from_hir)
+                                this.source_info(then_expr.span)
+                                    .track_hir_origin(then_expr.from_hir)
                             };
                             let (then_block, else_block) =
                                 this.in_if_then_scope(condition_scope, then_expr.span, |this| {

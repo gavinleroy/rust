@@ -527,7 +527,11 @@ impl<'tcx> Visitor<'tcx> for ExtraComments<'tcx> {
     }
 }
 
-fn comment(tcx: TyCtxt<'_>, SourceInfo { span, scope, origin: _ }: SourceInfo, function_span: Span) -> String {
+fn comment(
+    tcx: TyCtxt<'_>,
+    SourceInfo { span, scope, origin: _ }: SourceInfo,
+    function_span: Span,
+) -> String {
     let location = if tcx.sess.opts.unstable_opts.mir_pretty_relative_line_numbers {
         tcx.sess.source_map().span_to_relative_line_string(span, function_span)
     } else {

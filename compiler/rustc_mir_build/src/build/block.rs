@@ -93,7 +93,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
 
         let source_info = this.source_info(span);
         for stmt in stmts {
-            let Stmt { ref kind, opt_destruction_scope, from_hir, } = this.thir[*stmt];
+            let Stmt { ref kind, opt_destruction_scope, from_hir } = this.thir[*stmt];
             let source_info = source_info.track_hir_origin(from_hir);
             match kind {
                 StmtKind::Expr { scope, expr } => {
