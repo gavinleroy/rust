@@ -882,6 +882,7 @@ macro_rules! make_mir_visitor {
                 let SourceInfo {
                     span,
                     scope,
+                    origin: _
                 } = source_info;
 
                 self.visit_span($(& $mutability)? *span);

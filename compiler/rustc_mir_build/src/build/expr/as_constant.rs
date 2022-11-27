@@ -17,7 +17,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     pub(crate) fn as_constant(&mut self, expr: &Expr<'tcx>) -> Constant<'tcx> {
         let this = self;
         let tcx = this.tcx;
-        let Expr { ty, temp_lifetime: _, span, ref kind } = *expr;
+        let Expr { ty, temp_lifetime: _, span, ref kind, from_hir: _ } = *expr;
         match *kind {
             ExprKind::Scope { region_scope: _, lint_level: _, value } => {
                 this.as_constant(&this.thir[value])

@@ -794,7 +794,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
 
     /// Given a span and the current source scope, make a SourceInfo.
     pub(crate) fn source_info(&self, span: Span) -> SourceInfo {
-        SourceInfo { span, scope: self.source_scope }
+        SourceInfo { span, scope: self.source_scope, origin: HirOrigin::Untracked, }
     }
 
     // Finding scopes
@@ -923,7 +923,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 let scope_end = self.tcx.sess.source_map().end_point(region_scope_span);
 
                 scope.drops.push(DropData {
-                    source_info: SourceInfo { span: scope_end, scope: scope.source_scope },
+                    source_info: SourceInfo { span: scope_end, scope: scope.source_scope, origin: HirOrigin::Untracked, },
                     local,
                     kind: drop_kind,
                 });

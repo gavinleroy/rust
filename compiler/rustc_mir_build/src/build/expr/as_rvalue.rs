@@ -45,6 +45,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         let this = self;
         let expr_span = expr.span;
         let source_info = this.source_info(expr_span);
+        let source_info = source_info.track_hir_origin(expr.from_hir);
 
         match expr.kind {
             ExprKind::ThreadLocalRef(did) => block.and(Rvalue::ThreadLocalRef(did)),
@@ -120,7 +121,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                     LintLevel::Inherited,
                     Some(Safety::BuiltinUnsafe),
                 );
-                let synth_info = SourceInfo { span: expr_span, scope: synth_scope };
+                let synth_info = SourceInfo { span: expr_span, scope: synth_scope, origin: HirOrigin::Untracked, };
 
                 let size = this.temp(tcx.types.usize, expr_span);
                 this.cfg.push_assign(

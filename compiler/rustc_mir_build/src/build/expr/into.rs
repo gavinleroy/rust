@@ -28,6 +28,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         let this = self;
         let expr_span = expr.span;
         let source_info = this.source_info(expr_span);
+        let source_info = source_info.track_hir_origin(expr.from_hir);
 
         let expr_is_block_or_scope =
             matches!(expr.kind, ExprKind::Block { .. } | ExprKind::Scope { .. });
@@ -55,6 +56,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 let then_blk;
                 let then_expr = &this.thir[then];
                 let then_source_info = this.source_info(then_expr.span);
+                let then_source_info = then_source_info.track_hir_origin(then_expr.from_hir);
                 let condition_scope = this.local_scope();
 
                 let mut else_blk = unpack!(
@@ -69,9 +71,9 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                                     None,
                                 );
                                 this.source_scope = variable_scope;
-                                SourceInfo { span: then_expr.span, scope: variable_scope }
+                                SourceInfo { span: then_expr.span, scope: variable_scope, origin: HirOrigin::FromHir(then_expr.from_hir), }
                             } else {
-                                this.source_info(then_expr.span)
+                                this.source_info(then_expr.span).track_hir_origin(then_expr.from_hir)
                             };
                             let (then_block, else_block) =
                                 this.in_if_then_scope(condition_scope, then_expr.span, |this| {

@@ -172,6 +172,7 @@ pub enum BlockSafety {
 pub struct Stmt<'tcx> {
     pub kind: StmtKind<'tcx>,
     pub opt_destruction_scope: Option<region::Scope>,
+    pub from_hir: hir::HirId,
 }
 
 #[derive(Clone, Debug, HashStable)]
@@ -227,6 +228,9 @@ pub struct Expr<'tcx> {
 
     /// span of the expression in the source
     pub span: Span,
+
+    /// HIR node from whence this came.
+    pub from_hir: hir::HirId,
 
     /// kind of expression
     pub kind: ExprKind<'tcx>,
@@ -491,6 +495,7 @@ pub struct Arm<'tcx> {
     pub lint_level: LintLevel,
     pub scope: region::Scope,
     pub span: Span,
+    pub from_hir: hir::HirId,
 }
 
 /// A `match` guard.
@@ -850,11 +855,11 @@ mod size_asserts {
     use super::*;
     // tidy-alphabetical-start
     static_assert_size!(Block, 56);
-    static_assert_size!(Expr<'_>, 64);
+    static_assert_size!(Expr<'_>, 72);
     static_assert_size!(ExprKind<'_>, 40);
     static_assert_size!(Pat<'_>, 72);
     static_assert_size!(PatKind<'_>, 56);
-    static_assert_size!(Stmt<'_>, 48);
+    static_assert_size!(Stmt<'_>, 56);
     static_assert_size!(StmtKind<'_>, 40);
     // tidy-alphabetical-end
 }

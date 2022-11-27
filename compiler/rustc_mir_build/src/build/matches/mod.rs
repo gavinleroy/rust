@@ -656,7 +656,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                     visibility_scope =
                         Some(this.new_source_scope(scope_span, LintLevel::Inherited, None));
                 }
-                let source_info = SourceInfo { span, scope: this.source_scope };
+                let source_info = SourceInfo { span, scope: this.source_scope, origin: HirOrigin::Untracked, };
                 let visibility_scope = visibility_scope.unwrap();
                 this.declare_binding(
                     source_info,
@@ -2216,7 +2216,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         pat_span: Span,
     ) {
         let tcx = self.tcx;
-        let debug_source_info = SourceInfo { span: source_info.span, scope: visibility_scope };
+        let debug_source_info = SourceInfo { span: source_info.span, scope: visibility_scope, origin: HirOrigin::Untracked, };
         let binding_mode = match mode {
             BindingMode::ByValue => ty::BindingMode::BindByValue(mutability),
             BindingMode::ByRef(_) => ty::BindingMode::BindByReference(mutability),

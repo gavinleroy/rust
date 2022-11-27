@@ -19,6 +19,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         let this = self;
         let expr_span = expr.span;
         let source_info = this.source_info(expr.span);
+        let source_info = source_info.track_hir_origin(expr.from_hir);
         // Handle a number of expressions that don't need a destination at all. This
         // avoids needing a mountain of temporary `()` variables.
         match expr.kind {

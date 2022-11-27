@@ -93,7 +93,8 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
 
         let source_info = this.source_info(span);
         for stmt in stmts {
-            let Stmt { ref kind, opt_destruction_scope } = this.thir[*stmt];
+            let Stmt { ref kind, opt_destruction_scope, from_hir, } = this.thir[*stmt];
+            let source_info = source_info.track_hir_origin(from_hir);
             match kind {
                 StmtKind::Expr { scope, expr } => {
                     this.block_context.push(BlockFrame::Statement { ignores_expr_result: true });
@@ -190,24 +191,28 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
 
                     // Lower the `else` block first because its parent scope is actually
                     // enclosing the rest of the `let .. else ..` parts.
-                    let else_block_span = this.thir[*else_block].span;
+                    let else_block_stmt = &this.thir[*else_block];
+                    let else_block_span = else_block_stmt.span;
                     // This place is not really used because this destination place
                     // should never be used to take values at the end of the failure
                     // block.
                     let dummy_place = this.temp(this.tcx.types.never, else_block_span);
                     let failure_entry = this.cfg.start_new_block();
+                    // TODO(gavinleroy) for Aquascope is it necessary that `thir::Block`s
+                    // have associated HirId origins that we can track?
+                    let else_block_source_info = this.source_info(else_block_span);
                     let failure_block;
                     unpack!(
                         failure_block = this.ast_block(
                             dummy_place,
                             failure_entry,
                             *else_block,
-                            this.source_info(else_block_span),
+                            else_block_source_info,
                         )
                     );
                     this.cfg.terminate(
                         failure_block,
-                        this.source_info(else_block_span),
+                        else_block_source_info,
                         TerminatorKind::Unreachable,
                     );
 

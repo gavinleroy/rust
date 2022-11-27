@@ -38,6 +38,7 @@ impl<'tcx> Cx<'tcx> {
             self.rvalue_scopes.temporary_scope(self.region_scope_tree, hir_expr.hir_id.local_id);
         let expr_scope =
             region::Scope { id: hir_expr.hir_id.local_id, data: region::ScopeData::Node };
+        let hir_id = hir_expr.hir_id;
 
         trace!(?hir_expr.hir_id, ?hir_expr.span);
 
@@ -70,6 +71,7 @@ impl<'tcx> Cx<'tcx> {
                 value: self.thir.exprs.push(expr),
                 lint_level: LintLevel::Explicit(hir_expr.hir_id),
             },
+            from_hir: hir_id,
         };
 
         // Finally, create a destruction scope, if any.
@@ -85,6 +87,7 @@ impl<'tcx> Cx<'tcx> {
                     value: self.thir.exprs.push(expr),
                     lint_level: LintLevel::Inherited,
                 },
+                from_hir: hir_id,
             };
         }
 
@@ -99,7 +102,7 @@ impl<'tcx> Cx<'tcx> {
         adjustment: &Adjustment<'tcx>,
         mut span: Span,
     ) -> Expr<'tcx> {
-        let Expr { temp_lifetime, .. } = expr;
+        let Expr { temp_lifetime, from_hir, .. } = expr;
 
         // Adjust the span from the block, to the last expression of the
         // block. This is a better span when returning a mutable reference
@@ -146,6 +149,7 @@ impl<'tcx> Cx<'tcx> {
                         borrow_kind: deref.mutbl.to_borrow_kind(),
                         arg: self.thir.exprs.push(expr),
                     },
+                    from_hir,
                 };
 
                 let expr = Box::new([self.thir.exprs.push(expr)]);
@@ -162,7 +166,7 @@ impl<'tcx> Cx<'tcx> {
             Adjust::DynStar => ExprKind::Cast { source: self.thir.exprs.push(expr) },
         };
 
-        Expr { temp_lifetime, ty: adjustment.target, span, kind }
+        Expr { temp_lifetime, ty: adjustment.target, span, kind, from_hir, }
     }
 
     /// Lowers a cast expression.
@@ -175,6 +179,7 @@ impl<'tcx> Cx<'tcx> {
         span: Span,
     ) -> ExprKind<'tcx> {
         let tcx = self.tcx;
+        let hir_id = source.hir_id;
 
         // Check to see if this cast is a "coercion cast", where the cast is actually done
         // using a coercion (or is a no-op).
@@ -233,7 +238,7 @@ impl<'tcx> Cx<'tcx> {
 
             let lit = ScalarInt::try_from_uint(discr_offset as u128, size).unwrap();
             let kind = ExprKind::NonHirLiteral { lit, user_ty: None };
-            let offset = self.thir.exprs.push(Expr { temp_lifetime, ty: discr_ty, span, kind });
+            let offset = self.thir.exprs.push(Expr { temp_lifetime, ty: discr_ty, span, kind, from_hir: hir_id, });
 
             let source = match discr_did {
                 // in case we are offsetting from a computed discriminant
@@ -241,13 +246,14 @@ impl<'tcx> Cx<'tcx> {
                 Some(did) => {
                     let kind = ExprKind::NamedConst { def_id: did, substs, user_ty: None };
                     let lhs =
-                        self.thir.exprs.push(Expr { temp_lifetime, ty: discr_ty, span, kind });
+                        self.thir.exprs.push(Expr { temp_lifetime, ty: discr_ty, span, kind, from_hir: hir_id, });
                     let bin = ExprKind::Binary { op: BinOp::Add, lhs, rhs: offset };
                     self.thir.exprs.push(Expr {
                         temp_lifetime,
                         ty: discr_ty,
                         span: span,
                         kind: bin,
+                        from_hir: hir_id,
                     })
                 }
                 None => offset,
@@ -263,6 +269,7 @@ impl<'tcx> Cx<'tcx> {
         let expr_span = expr.span;
         let temp_lifetime =
             self.rvalue_scopes.temporary_scope(self.region_scope_tree, expr.hir_id.local_id);
+        let hir_id = expr.hir_id;
 
         let kind = match expr.kind {
             // Here comes the interesting stuff:
@@ -306,6 +313,7 @@ impl<'tcx> Cx<'tcx> {
                         temp_lifetime,
                         span: expr.span,
                         kind: ExprKind::Tuple { fields: self.mirror_exprs(args) },
+                        from_hir: hir_id,
                     };
                     let tupled_args = self.thir.exprs.push(tupled_args);
 
@@ -697,6 +705,7 @@ impl<'tcx> Cx<'tcx> {
                     temp_lifetime,
                     span: self.thir[block].span,
                     kind: ExprKind::Block { block },
+                    from_hir: hir_id,
                 });
                 ExprKind::Loop { body }
             }
@@ -725,6 +734,7 @@ impl<'tcx> Cx<'tcx> {
                         ty: expr_ty,
                         span: expr.span,
                         kind: cast,
+                        from_hir: hir_id,
                     });
                     debug!("make_mirror_unadjusted: (cast) user_ty={:?}", user_ty);
 
@@ -760,7 +770,7 @@ impl<'tcx> Cx<'tcx> {
             hir::ExprKind::Err => unreachable!(),
         };
 
-        Expr { temp_lifetime, ty: expr_ty, span: expr.span, kind }
+        Expr { temp_lifetime, ty: expr_ty, span: expr.span, kind, from_hir: hir_id, }
     }
 
     fn user_substs_applied_to_res(
@@ -806,6 +816,7 @@ impl<'tcx> Cx<'tcx> {
     ) -> Expr<'tcx> {
         let temp_lifetime =
             self.rvalue_scopes.temporary_scope(self.region_scope_tree, expr.hir_id.local_id);
+        let hir_id = expr.hir_id;
         let (def_id, substs, user_ty) = match overloaded_callee {
             Some((def_id, substs)) => (def_id, substs, None),
             None => {
@@ -819,7 +830,7 @@ impl<'tcx> Cx<'tcx> {
             }
         };
         let ty = self.tcx().mk_fn_def(def_id, substs);
-        Expr { temp_lifetime, ty, span, kind: ExprKind::ZstLiteral { user_ty } }
+        Expr { temp_lifetime, ty, span, kind: ExprKind::ZstLiteral { user_ty }, from_hir: hir_id, }
     }
 
     fn convert_arm(&mut self, arm: &'tcx hir::Arm<'tcx>) -> ArmId {
@@ -835,12 +846,14 @@ impl<'tcx> Cx<'tcx> {
             lint_level: LintLevel::Explicit(arm.hir_id),
             scope: region::Scope { id: arm.hir_id.local_id, data: region::ScopeData::Node },
             span: arm.span,
+            from_hir: arm.hir_id,
         };
         self.thir.arms.push(arm)
     }
 
     fn convert_path_expr(&mut self, expr: &'tcx hir::Expr<'tcx>, res: Res) -> ExprKind<'tcx> {
         let substs = self.typeck_results().node_substs(expr.hir_id);
+        let hir_id = expr.hir_id;
         match res {
             // A regular function, constructor function or a constant.
             Res::Def(DefKind::Fn, _)
@@ -902,7 +915,7 @@ impl<'tcx> Cx<'tcx> {
                     ExprKind::StaticRef { alloc_id, ty, def_id: id }
                 };
                 ExprKind::Deref {
-                    arg: self.thir.exprs.push(Expr { ty, temp_lifetime, span: expr.span, kind }),
+                    arg: self.thir.exprs.push(Expr { ty, temp_lifetime, span: expr.span, kind, from_hir: hir_id, }),
                 }
             }
 
@@ -970,6 +983,7 @@ impl<'tcx> Cx<'tcx> {
             span_bug!(span, "overloaded_place: receiver is not a reference");
         };
         let ref_ty = self.tcx.mk_ref(region, ty::TypeAndMut { ty: place_ty, mutbl });
+        let hir_id = expr.hir_id;
 
         // construct the complete expression `foo()` for the overloaded call,
         // which will yield the &T type
@@ -983,6 +997,7 @@ impl<'tcx> Cx<'tcx> {
             ty: ref_ty,
             span,
             kind: ExprKind::Call { ty: fun_ty, fun, args, from_hir_call: false, fn_span: span },
+            from_hir: hir_id,
         });
 
         // construct and return a deref wrapper `*foo()`
@@ -998,6 +1013,7 @@ impl<'tcx> Cx<'tcx> {
             .rvalue_scopes
             .temporary_scope(self.region_scope_tree, closure_expr.hir_id.local_id);
         let var_ty = place.base_ty;
+        let hir_id = closure_expr.hir_id;
 
         // The result of capture analysis in `rustc_hir_analysis/check/upvar.rs`represents a captured path
         // as it's seen for use within the closure and not at the time of closure creation.
@@ -1014,6 +1030,7 @@ impl<'tcx> Cx<'tcx> {
             ty: var_ty,
             span: closure_expr.span,
             kind: self.convert_var(var_hir_id),
+            from_hir: hir_id,
         };
 
         for proj in place.projections.iter() {
@@ -1033,7 +1050,7 @@ impl<'tcx> Cx<'tcx> {
             };
 
             captured_place_expr =
-                Expr { temp_lifetime, ty: proj.ty, span: closure_expr.span, kind };
+                Expr { temp_lifetime, ty: proj.ty, span: closure_expr.span, kind, from_hir: hir_id, };
         }
 
         captured_place_expr
@@ -1051,6 +1068,7 @@ impl<'tcx> Cx<'tcx> {
         let temp_lifetime = self
             .rvalue_scopes
             .temporary_scope(self.region_scope_tree, closure_expr.hir_id.local_id);
+        let hir_id = closure_expr.hir_id;
 
         match upvar_capture {
             ty::UpvarCapture::ByValue => captured_place_expr,
@@ -1068,6 +1086,7 @@ impl<'tcx> Cx<'tcx> {
                         borrow_kind,
                         arg: self.thir.exprs.push(captured_place_expr),
                     },
+                    from_hir: hir_id,
                 }
             }
         }
