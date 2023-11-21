@@ -1943,6 +1943,9 @@ written to standard error output)"),
         "for every macro invocation, print its name and arguments (default: no)"),
     track_diagnostics: bool = (false, parse_bool, [UNTRACKED],
         "tracks where in rustc a diagnostic was emitted"),
+    track_trait_obligations: bool = (false, parse_bool, [TRACKED],
+        "tracks evaluated obligations while trait solving, option is only \
+         valid when -Z next-solver=globally (default: no)"),
     // Diagnostics are considered side-effects of a query (see `QuerySideEffects`) and are saved
     // alongside query results and changes to translation options can affect diagnostics - so
     // translation options should be tracked.

@@ -11,7 +11,7 @@ use rustc_middle::ty;
 use rustc_middle::ty::error::{ExpectedFound, TypeError};
 
 use super::eval_ctxt::GenerateProofTree;
-use super::{Certainty, InferCtxtEvalExt};
+use super::{Certainty, Goal, InferCtxtEvalExt};
 
 /// A trait engine using the new trait solver.
 ///
@@ -32,11 +32,34 @@ pub struct FulfillmentCtxt<'tcx> {
     /// gets rolled back. Because of this we explicitly check that we only
     /// use the context in exactly this snapshot.
     usable_in_snapshot: usize,
+
+    track_obligations: bool,
 }
 
 impl<'tcx> FulfillmentCtxt<'tcx> {
     pub fn new(infcx: &InferCtxt<'tcx>) -> FulfillmentCtxt<'tcx> {
-        FulfillmentCtxt { obligations: Vec::new(), usable_in_snapshot: infcx.num_open_snapshots() }
+        FulfillmentCtxt {
+            obligations: Vec::new(),
+            usable_in_snapshot: infcx.num_open_snapshots(),
+            track_obligations: infcx.tcx.sess.opts.unstable_opts.track_trait_obligations,
+        }
+    }
+
+    fn track_evaluated_obligation(
+        &self,
+        infcx: &InferCtxt<'tcx>,
+        obligation: &PredicateObligation<'tcx>,
+        result: &Result<(bool, Certainty, Vec<Goal<'tcx, ty::Predicate<'tcx>>>), NoSolution>,
+    ) {
+        if self.track_obligations {
+            if let Some(inspector) = infcx.obligation_inspector.get() {
+                let result = match result {
+                    Ok((_, c, _)) => Ok(*c),
+                    Err(NoSolution) => Err(NoSolution),
+                };
+                (inspector)(infcx, &obligation, result);
+            }
+        }
     }
 }
 
@@ -52,7 +75,8 @@ impl<'tcx> TraitEngine<'tcx> for FulfillmentCtxt<'tcx> {
     }
 
     fn collect_remaining_errors(&mut self, infcx: &InferCtxt<'tcx>) -> Vec<FulfillmentError<'tcx>> {
-        self.obligations
+        let errors = self
+            .obligations
             .drain(..)
             .map(|obligation| {
                 let code = infcx.probe(|_| {
@@ -81,7 +105,9 @@ impl<'tcx> TraitEngine<'tcx> for FulfillmentCtxt<'tcx> {
                     root_obligation: obligation,
                 }
             })
-            .collect()
+            .collect();
+
+        errors
     }
 
     fn select_where_possible(&mut self, infcx: &InferCtxt<'tcx>) -> Vec<FulfillmentError<'tcx>> {
@@ -95,65 +121,66 @@ impl<'tcx> TraitEngine<'tcx> for FulfillmentCtxt<'tcx> {
             let mut has_changed = false;
             for obligation in mem::take(&mut self.obligations) {
                 let goal = obligation.clone().into();
-                let (changed, certainty, nested_goals) =
-                    match infcx.evaluate_root_goal(goal, GenerateProofTree::IfEnabled).0 {
-                        Ok(result) => result,
-                        Err(NoSolution) => {
-                            errors.push(FulfillmentError {
-                                obligation: obligation.clone(),
-                                code: match goal.predicate.kind().skip_binder() {
-                                    ty::PredicateKind::Clause(ty::ClauseKind::Projection(_)) => {
-                                        FulfillmentErrorCode::CodeProjectionError(
-                                            // FIXME: This could be a `Sorts` if the term is a type
-                                            MismatchedProjectionTypes { err: TypeError::Mismatch },
-                                        )
-                                    }
-                                    ty::PredicateKind::NormalizesTo(..) => {
-                                        FulfillmentErrorCode::CodeProjectionError(
-                                            MismatchedProjectionTypes { err: TypeError::Mismatch },
-                                        )
-                                    }
-                                    ty::PredicateKind::AliasRelate(_, _, _) => {
-                                        FulfillmentErrorCode::CodeProjectionError(
-                                            MismatchedProjectionTypes { err: TypeError::Mismatch },
-                                        )
-                                    }
-                                    ty::PredicateKind::Subtype(pred) => {
-                                        let (a, b) = infcx.instantiate_binder_with_placeholders(
-                                            goal.predicate.kind().rebind((pred.a, pred.b)),
-                                        );
-                                        let expected_found = ExpectedFound::new(true, a, b);
-                                        FulfillmentErrorCode::CodeSubtypeError(
-                                            expected_found,
-                                            TypeError::Sorts(expected_found),
-                                        )
-                                    }
-                                    ty::PredicateKind::Coerce(pred) => {
-                                        let (a, b) = infcx.instantiate_binder_with_placeholders(
-                                            goal.predicate.kind().rebind((pred.a, pred.b)),
-                                        );
-                                        let expected_found = ExpectedFound::new(false, a, b);
-                                        FulfillmentErrorCode::CodeSubtypeError(
-                                            expected_found,
-                                            TypeError::Sorts(expected_found),
-                                        )
-                                    }
-                                    ty::PredicateKind::Clause(_)
-                                    | ty::PredicateKind::ObjectSafe(_)
-                                    | ty::PredicateKind::Ambiguous => {
-                                        FulfillmentErrorCode::CodeSelectionError(
-                                            SelectionError::Unimplemented,
-                                        )
-                                    }
-                                    ty::PredicateKind::ConstEquate(..) => {
-                                        bug!("unexpected goal: {goal:?}")
-                                    }
-                                },
-                                root_obligation: obligation,
-                            });
-                            continue;
-                        }
-                    };
+                let result = infcx.evaluate_root_goal(goal, GenerateProofTree::IfEnabled).0;
+                self.track_evaluated_obligation(infcx, &obligation, &result);
+                let (changed, certainty, nested_goals) = match result {
+                    Ok(result) => result,
+                    Err(NoSolution) => {
+                        errors.push(FulfillmentError {
+                            obligation: obligation.clone(),
+                            code: match goal.predicate.kind().skip_binder() {
+                                ty::PredicateKind::Clause(ty::ClauseKind::Projection(_)) => {
+                                    FulfillmentErrorCode::CodeProjectionError(
+                                        // FIXME: This could be a `Sorts` if the term is a type
+                                        MismatchedProjectionTypes { err: TypeError::Mismatch },
+                                    )
+                                }
+                                ty::PredicateKind::NormalizesTo(..) => {
+                                    FulfillmentErrorCode::CodeProjectionError(
+                                        MismatchedProjectionTypes { err: TypeError::Mismatch },
+                                    )
+                                }
+                                ty::PredicateKind::AliasRelate(_, _, _) => {
+                                    FulfillmentErrorCode::CodeProjectionError(
+                                        MismatchedProjectionTypes { err: TypeError::Mismatch },
+                                    )
+                                }
+                                ty::PredicateKind::Subtype(pred) => {
+                                    let (a, b) = infcx.instantiate_binder_with_placeholders(
+                                        goal.predicate.kind().rebind((pred.a, pred.b)),
+                                    );
+                                    let expected_found = ExpectedFound::new(true, a, b);
+                                    FulfillmentErrorCode::CodeSubtypeError(
+                                        expected_found,
+                                        TypeError::Sorts(expected_found),
+                                    )
+                                }
+                                ty::PredicateKind::Coerce(pred) => {
+                                    let (a, b) = infcx.instantiate_binder_with_placeholders(
+                                        goal.predicate.kind().rebind((pred.a, pred.b)),
+                                    );
+                                    let expected_found = ExpectedFound::new(false, a, b);
+                                    FulfillmentErrorCode::CodeSubtypeError(
+                                        expected_found,
+                                        TypeError::Sorts(expected_found),
+                                    )
+                                }
+                                ty::PredicateKind::Clause(_)
+                                | ty::PredicateKind::ObjectSafe(_)
+                                | ty::PredicateKind::Ambiguous => {
+                                    FulfillmentErrorCode::CodeSelectionError(
+                                        SelectionError::Unimplemented,
+                                    )
+                                }
+                                ty::PredicateKind::ConstEquate(..) => {
+                                    bug!("unexpected goal: {goal:?}")
+                                }
+                            },
+                            root_obligation: obligation,
+                        });
+                        continue;
+                    }
+                };
                 // Push any nested goals that we get from unifying our canonical response
                 // with our obligation onto the fulfillment context.
                 self.obligations.extend(nested_goals.into_iter().map(|goal| {
