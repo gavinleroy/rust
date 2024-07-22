@@ -518,6 +518,11 @@ pub fn std_cargo(builder: &Builder<'_>, target: TargetSelection, stage: u32, car
         }
     }
 
+    // @WASMPATCH
+    if stage >= 1 {
+        cargo.rustflag("-Zalways-encode-mir");
+    }
+
     // By default, rustc uses `-Cembed-bitcode=yes`, and Cargo overrides that
     // with `-Cembed-bitcode=no` for non-LTO builds. However, libstd must be
     // built with bitcode so that the produced rlibs can be used for both LTO
@@ -967,7 +972,7 @@ impl Step for Rustc {
             &stamp,
             vec![],
             false,
-            true, // Only ship rustc_driver.so and .rmeta files, not all intermediate .rlib files.
+            !target.contains("wasi"),//@WASMPATCH //true, // Only ship rustc_driver.so and .rmeta files, not all intermediate .rlib files.
         );
 
         // When building `librustc_driver.so` (like `libLLVM.so`) on linux, it can contain
@@ -1327,7 +1332,7 @@ impl Step for CodegenBackend {
         }
 
         for backend in run.builder.config.codegen_backends(run.target) {
-            if backend == "llvm" {
+            if backend == "llvm" || backend == "cranelift" /* @WASMPATCH */ {
                 continue; // Already built as part of rustc
             }
 
@@ -1434,7 +1439,7 @@ fn copy_codegen_backends_to_sysroot(
     }
 
     for backend in builder.config.codegen_backends(target) {
-        if backend == "llvm" {
+        if backend == "llvm" || backend == "cranelift" /* @WASMPATCH */ {
             continue; // Already built as part of rustc
         }
 
@@ -1739,7 +1744,7 @@ impl Step for Assemble {
         build_compiler.stage = actual_stage;
 
         for backend in builder.config.codegen_backends(target_compiler.host) {
-            if backend == "llvm" {
+            if backend == "llvm" || backend == "cranelift" /* @WASMPATCH */ {
                 continue; // Already built as part of rustc
             }
 

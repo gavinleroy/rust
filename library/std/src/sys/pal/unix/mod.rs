@@ -75,6 +75,7 @@ pub unsafe fn init(argc: isize, argv: *const *const u8, sigpipe: u8) {
         // fast path with a single syscall for systems with poll()
         #[cfg(not(any(
             miri,
+            all(), // @WASMPATCH
             target_os = "emscripten",
             target_os = "fuchsia",
             target_os = "vxworks",

@@ -29,6 +29,8 @@ use rustc_span::{Span, DUMMY_SP};
 use rustc_target::spec::{PanicStrategy, Target, TargetTriple};
 
 use proc_macro::bridge::client::ProcMacro;
+// @WASMPATCH
+#[cfg(any(unix, windows))]
 use std::error::Error;
 use std::ops::Fn;
 use std::path::Path;
@@ -1154,6 +1156,8 @@ fn format_dlopen_err(e: &(dyn std::error::Error + 'static)) -> String {
 // proc-macro DLL with `Error::LoadLibraryExW`. It is suspected that something in the
 // system still holds a lock on the file, so we retry a few times before calling it
 // an error.
+// @WASMPATCH
+#[cfg(any(unix, windows))]
 fn load_dylib(path: &Path, max_attempts: usize) -> Result<libloading::Library, String> {
     assert!(max_attempts > 0);
 
@@ -1215,6 +1219,8 @@ impl From<DylibError> for CrateError {
     }
 }
 
+// @WASMPATCH
+#[cfg(any(unix, windows))]
 pub unsafe fn load_symbol_from_dylib<T: Copy>(
     path: &Path,
     sym_name: &str,
@@ -1233,4 +1239,16 @@ pub unsafe fn load_symbol_from_dylib<T: Copy>(
     std::mem::forget(lib);
 
     Ok(*sym)
+}
+
+// @WASMPATCH
+#[cfg(not(any(unix, windows)))]
+pub unsafe fn load_symbol_from_dylib<T: Copy>(
+    path: &Path,
+    _sym_name: &str,
+) -> Result<T, DylibError> {
+    Err(DylibError::DlOpen(
+        path.display().to_string(),
+        "dlopen not supported on this platform".to_owned(),
+    ))
 }

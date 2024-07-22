@@ -446,6 +446,11 @@ pub trait EvalContextExt<'mir, 'tcx: 'mir>: crate::MiriInterpCxExt<'mir, 'tcx> {
         target_op: &OpTy<'tcx, Provenance>,
         linkpath_op: &OpTy<'tcx, Provenance>,
     ) -> InterpResult<'tcx, i32> {
+        #[cfg(target_os = "wasi")]
+        fn create_link(src: &Path, dst: &Path) -> std::io::Result<()> {
+            std::os::wasi::fs::symlink_path(src, dst)
+        }
+
         #[cfg(unix)]
         fn create_link(src: &Path, dst: &Path) -> std::io::Result<()> {
             std::os::unix::fs::symlink(src, dst)

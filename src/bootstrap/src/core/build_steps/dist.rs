@@ -1282,14 +1282,16 @@ impl Step for Miri {
         let target = self.target;
 
         let miri = builder.ensure(tool::Miri { compiler, target, extra_features: Vec::new() });
-        let cargomiri =
-            builder.ensure(tool::CargoMiri { compiler, target, extra_features: Vec::new() });
+        // @WASMPATCH
+        // let cargomiri =
+        //     builder.ensure(tool::CargoMiri { compiler, target, extra_features: Vec::new() });
 
         let mut tarball = Tarball::new(builder, "miri", &target.triple);
         tarball.set_overlay(OverlayKind::Miri);
         tarball.is_preview(true);
         tarball.add_file(miri, "bin", 0o755);
-        tarball.add_file(cargomiri, "bin", 0o755);
+        // @WASMPATCH
+        // tarball.add_file(cargomiri, "bin", 0o755);
         tarball.add_legal_and_readme_to("share/doc/miri");
         Some(tarball.generate())
     }

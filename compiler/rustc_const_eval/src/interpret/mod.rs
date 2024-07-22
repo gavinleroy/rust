@@ -21,7 +21,9 @@ mod visitor;
 #[doc(no_inline)]
 pub use rustc_middle::mir::interpret::*; // have all the `interpret` symbols in one place: here
 
-pub use self::eval_context::{format_interp_error, Frame, FrameInfo, InterpCx, StackPopCleanup};
+pub use self::eval_context::{
+    format_interp_error, Frame, FrameInfo, InterpCx, LocalState, LocalValue, StackPopCleanup,
+};
 pub use self::intern::{
     intern_const_alloc_for_constprop, intern_const_alloc_recursive, HasStaticRootDefId, InternKind,
     InternResult,
@@ -35,7 +37,7 @@ pub use self::terminator::FnArg;
 pub use self::validity::{CtfeValidationMode, RefTracking};
 pub use self::visitor::ValueVisitor;
 
-use self::{
+pub use self::{
     operand::Operand,
     place::{MemPlace, Place},
 };

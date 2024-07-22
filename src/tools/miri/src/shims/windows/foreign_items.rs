@@ -21,6 +21,14 @@ pub fn is_dyn_sym(name: &str) -> bool {
     )
 }
 
+
+#[cfg(target_os = "wasi")]
+fn win_absolute<'tcx>(path: &Path) -> InterpResult<'tcx, io::Result<PathBuf>> {
+    // TODO: is there a good way to get the absolute path of a file in WASI?
+    // @WASMPATCH
+    return Ok(path::absolute(path));
+}
+
 #[cfg(windows)]
 fn win_absolute<'tcx>(path: &Path) -> InterpResult<'tcx, io::Result<PathBuf>> {
     // We are on Windows so we can simply lte the host do this.

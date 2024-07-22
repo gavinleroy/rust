@@ -126,7 +126,11 @@ pub fn get_linker<'a>(
             new_path.extend(env::split_paths(&path));
         }
     }
-    cmd.env("PATH", env::join_paths(new_path).unwrap());
+    // cmd.env("PATH", env::join_paths(new_path).unwrap());
+    // @WASMPATCH
+    if cfg!(not(target_family = "wasm")) {
+        cmd.env("PATH", env::join_paths(new_path).unwrap());
+    }
 
     // FIXME: Move `/LIBPATH` addition for uwp targets from the linker construction
     // to the linker args construction.

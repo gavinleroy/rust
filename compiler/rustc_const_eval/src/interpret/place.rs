@@ -51,7 +51,7 @@ impl<Prov: Provenance> MemPlaceMeta<Prov> {
 }
 
 #[derive(Copy, Clone, Hash, PartialEq, Eq, Debug)]
-pub(super) struct MemPlace<Prov: Provenance = CtfeProvenance> {
+pub struct MemPlace<Prov: Provenance = CtfeProvenance> {
     /// The pointer can be a pure integer, with the `None` provenance.
     pub ptr: Pointer<Option<Prov>>,
     /// Metadata for unsized places. Interpretation is up to the type.
@@ -181,7 +181,7 @@ impl<'tcx, Prov: Provenance> Projectable<'tcx, Prov> for MPlaceTy<'tcx, Prov> {
 }
 
 #[derive(Copy, Clone, Debug)]
-pub(super) enum Place<Prov: Provenance = CtfeProvenance> {
+pub enum Place<Prov: Provenance = CtfeProvenance> {
     /// A place referring to a value allocated in the `Memory` system.
     Ptr(MemPlace<Prov>),
 

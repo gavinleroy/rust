@@ -751,14 +751,19 @@ impl Step for LlvmBitcodeLinker {
 
         let tool_out = builder
             .cargo_out(self.compiler, Mode::ToolRustc, self.target)
-            .join(exe(bin_name, self.compiler.host));
+            // .join(exe(bin_name, self.compiler.host));
+            // @WASMPATCH
+            .join(exe(bin_name, self.target));
 
         if self.compiler.stage > 0 {
             let bindir_self_contained = builder
                 .sysroot(self.compiler)
                 .join(format!("lib/rustlib/{}/bin/self-contained", self.target.triple));
             t!(fs::create_dir_all(&bindir_self_contained));
-            let bin_destination = bindir_self_contained.join(exe(bin_name, self.compiler.host));
+            // let bin_destination = bindir_self_contained.join(exe(bin_name, self.compiler.host));
+            // @WASMPATCH
+            let bin_destination = bindir_self_contained.join(exe(bin_name, self.target));
+            println!("@WASMPATCH: copy_link {tool_out:?} to {bin_destination:?}");
             builder.copy_link(&tool_out, &bin_destination);
             bin_destination
         } else {
@@ -818,6 +823,8 @@ macro_rules! tool_extended {
 
             #[allow(unused_mut)]
             fn run(mut $sel, $builder: &Builder<'_>) -> PathBuf {
+                println!("<{:?} as Step>::run", $tool_name);
+
                 let tool = $builder.ensure(ToolBuild {
                     compiler: $sel.compiler,
                     target: $sel.target,
@@ -839,11 +846,17 @@ macro_rules! tool_extended {
 
                     $(for add_bin in $add_bins_to_sysroot {
                         let bin_source = tools_out.join(exe(add_bin, $sel.target));
-                        let bin_destination = bindir.join(exe(add_bin, $sel.compiler.host));
+                        // let bin_destination = bindir.join(exe(add_bin, $sel.compiler.host));
+                        // @WASMPATCH
+                        let bin_destination = bindir.join(exe(add_bin, $sel.target));
+                        println!("@WASMPATCH: copy_link {bin_source:?} to {bin_destination:?}");
                         $builder.copy_link(&bin_source, &bin_destination);
                     })?
 
-                    let tool = bindir.join(exe($tool_name, $sel.compiler.host));
+                    // let tool = bindir.join(exe($tool_name, $sel.compiler.host));
+                    // @WASMPATCH
+                    let tool = bindir.join(exe($tool_name, $sel.target));
+                    println!("@WASMPATCH: tool = {tool:?}");
                     tool
                 } else {
                     tool

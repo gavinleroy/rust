@@ -162,10 +162,10 @@ pub enum StackPopCleanup {
 /// State of a local variable including a memoized layout
 #[derive(Clone)]
 pub struct LocalState<'tcx, Prov: Provenance = CtfeProvenance> {
-    value: LocalValue<Prov>,
+    pub value: LocalValue<Prov>,
     /// Don't modify if `Some`, this is only used to prevent computing the layout twice.
     /// Avoids computing the layout of locals that are never actually initialized.
-    layout: Cell<Option<TyAndLayout<'tcx>>>,
+    pub layout: Cell<Option<TyAndLayout<'tcx>>>,
 }
 
 impl<Prov: Provenance> std::fmt::Debug for LocalState<'_, Prov> {
@@ -182,7 +182,7 @@ impl<Prov: Provenance> std::fmt::Debug for LocalState<'_, Prov> {
 /// This does not store the type of the local; the type is given by `body.local_decls` and can never
 /// change, so by not storing here we avoid having to maintain that as an invariant.
 #[derive(Copy, Clone, Debug)] // Miri debug-prints these
-pub(super) enum LocalValue<Prov: Provenance = CtfeProvenance> {
+pub enum LocalValue<Prov: Provenance = CtfeProvenance> {
     /// This local is not currently alive, and cannot be used at all.
     Dead,
     /// A normal, live local.

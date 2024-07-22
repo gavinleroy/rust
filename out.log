@@ -1,0 +1,50 @@
+@WASMPATCH: copy_link "/Users/gavinleroy/Dev/Forschung/rust/build/aarch64-apple-darwin/stage1-tools/aarch64-apple-darwin/release/llvm-bitcode-linker" to "/Users/gavinleroy/Dev/Forschung/rust/build/aarch64-apple-darwin/stage1/lib/rustlib/aarch64-apple-darwin/bin/self-contained/llvm-bitcode-linker"
+@WASMPATCH: copy_link "/Users/gavinleroy/Dev/Forschung/rust/build/aarch64-apple-darwin/stage1-tools/wasm32-wasi/release/llvm-bitcode-linker.wasm" to "/Users/gavinleroy/Dev/Forschung/rust/build/aarch64-apple-darwin/stage1/lib/rustlib/wasm32-wasi/bin/self-contained/llvm-bitcode-linker.wasm"
+<"miri" as Step>::run
+@WASMPATCH: copy_link "/Users/gavinleroy/Dev/Forschung/rust/build/aarch64-apple-darwin/stage2-tools/wasm32-wasi/release/miri.wasm" to "/Users/gavinleroy/Dev/Forschung/rust/build/aarch64-apple-darwin/stage2/bin/miri.wasm"
+@WASMPATCH: tool = "/Users/gavinleroy/Dev/Forschung/rust/build/aarch64-apple-darwin/stage2/bin/miri.wasm"
+Building stage0 library artifacts (aarch64-apple-darwin)
+Building compiler artifacts (stage0 -> stage1, aarch64-apple-darwin)
+Creating a sysroot for stage1 compiler (use `rustup toolchain link 'name' build/host/stage1`)
+Building stage1 library artifacts (aarch64-apple-darwin)
+Building compiler artifacts (stage1 -> stage2, aarch64-apple-darwin)
+Creating a sysroot for stage2 compiler (use `rustup toolchain link 'name' build/host/stage2`)
+@WASMPATCH: copy_link "/Users/gavinleroy/Dev/Forschung/rust/build/aarch64-apple-darwin/stage1-tools/aarch64-apple-darwin/release/llvm-bitcode-linker" to "/Users/gavinleroy/Dev/Forschung/rust/build/aarch64-apple-darwin/stage1/lib/rustlib/aarch64-apple-darwin/bin/self-contained/llvm-bitcode-linker"
+Uplifting library (stage1 -> stage2)
+Building stage0 tool rust-installer (aarch64-apple-darwin)
+Dist rust-std-1.80.0-dev-aarch64-apple-darwin
+	finished in 0.203 seconds
+Installing stage2 std (aarch64-apple-darwin)
+install: uninstalling component 'rust-std-aarch64-apple-darwin'
+install: creating uninstall script at /Users/gavinleroy/Dev/Forschung/rust/dist/lib/rustlib/uninstall.sh
+install: installing component 'rust-std-aarch64-apple-darwin'
+
+    rust std installed.
+
+Building stage1 library artifacts (aarch64-apple-darwin -> wasm32-wasi)
+Building compiler artifacts (stage1:aarch64-apple-darwin -> stage2:wasm32-wasi)
+Creating a sysroot for stage2 compiler (wasm32-wasi) (use `rustup toolchain link 'name' build/wasm32-wasi/stage2`)
+@WASMPATCH: copy_link "/Users/gavinleroy/Dev/Forschung/rust/build/aarch64-apple-darwin/stage1-tools/wasm32-wasi/release/llvm-bitcode-linker.wasm" to "/Users/gavinleroy/Dev/Forschung/rust/build/aarch64-apple-darwin/stage1/lib/rustlib/wasm32-wasi/bin/self-contained/llvm-bitcode-linker.wasm"
+Dist rustc-1.80.0-dev-wasm32-wasi
+	finished in 0.005 seconds
+Installing stage2 rustc (wasm32-wasi)
+install: uninstalling component 'rustc'
+install: creating uninstall script at /Users/gavinleroy/Dev/Forschung/rust/dist/lib/rustlib/uninstall.sh
+install: installing component 'rustc'
+
+    rustc installed.
+
+<"miri" as Step>::run
+Uplifting library (stage1:aarch64-apple-darwin -> stage2:wasm32-wasi)
+Uplifting rustc (stage1:aarch64-apple-darwin -> stage3:wasm32-wasi)
+Building tool miri (stage2:aarch64-apple-darwin -> stage3:wasm32-wasi)
+@WASMPATCH: copy_link "/Users/gavinleroy/Dev/Forschung/rust/build/aarch64-apple-darwin/stage2-tools/wasm32-wasi/release/miri.wasm" to "/Users/gavinleroy/Dev/Forschung/rust/build/aarch64-apple-darwin/stage2/bin/miri.wasm"
+@WASMPATCH: tool = "/Users/gavinleroy/Dev/Forschung/rust/build/aarch64-apple-darwin/stage2/bin/miri.wasm"
+Dist miri-1.80.0-dev-wasm32-wasi
+	finished in 0.005 seconds
+Installing stage2 miri (wasm32-wasi)
+install: creating uninstall script at /Users/gavinleroy/Dev/Forschung/rust/dist/lib/rustlib/uninstall.sh
+install: installing component 'miri-preview'
+
+    miri installed.
+

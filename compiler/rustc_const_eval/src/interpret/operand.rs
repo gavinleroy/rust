@@ -377,7 +377,7 @@ impl<'tcx, Prov: Provenance> Projectable<'tcx, Prov> for ImmTy<'tcx, Prov> {
 /// or still in memory. The latter is an optimization, to delay reading that chunk of
 /// memory and to avoid having to store arbitrary-sized data here.
 #[derive(Copy, Clone, Debug)]
-pub(super) enum Operand<Prov: Provenance = CtfeProvenance> {
+pub enum Operand<Prov: Provenance = CtfeProvenance> {
     Immediate(Immediate<Prov>),
     Indirect(MemPlace<Prov>),
 }

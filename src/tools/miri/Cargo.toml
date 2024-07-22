@@ -23,10 +23,12 @@ rand = "0.8"
 smallvec = "1.7"
 aes = { version = "0.8.3", features = ["hazmat"] }
 measureme = "11"
-ctrlc = "3.2.5"
 chrono = { version = "0.4.38", default-features = false }
 chrono-tz = "0.9"
 directories = "5"
+
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+ctrlc = "3.2.5"
 
 # Copied from `compiler/rustc/Cargo.toml`.
 # But only for some targets, it fails for others. Rustc configures this in its CI, but we can't
