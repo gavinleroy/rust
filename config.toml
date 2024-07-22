@@ -1,0 +1,27 @@
+# Includes one of the default files in src/bootstrap/defaults
+profile = "compiler"
+change-id = 9999999
+
+[rust]
+codegen-backends = ["llvm", "cranelift"]
+deny-warnings = false
+
+[build]
+docs = false
+extended = true
+tools = ["rust-src", "rustc-dev", "llvm-tools-preview", "miri"]
+host = ["wasm32-wasi"]
+target = ["aarch64-apple-darwin"]
+
+[install]
+prefix = "dist"
+sysconfdir = "etc"
+
+[target.'wasm32-wasi']
+wasi-root = "wasi-sdk-20.0/share/wasi-sysroot"
+linker = "wasi-sdk-20.0/bin/clang"
+codegen-backends = ["cranelift"]
+
+[target.'aarch64-apple-darwin']
+cc = "clang"
+cxx = "clang++"
