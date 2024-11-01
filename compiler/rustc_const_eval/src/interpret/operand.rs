@@ -661,6 +661,26 @@ impl<'mir, 'tcx: 'mir, M: Machine<'mir, 'tcx>> InterpCx<'mir, 'tcx, M> {
         }
     }
 
+    /// Read from a local in a given frame.
+    /// Will not access memory, instead an indirect `Operand` is returned.
+    ///
+    /// This is public because it is used by [priroda](https://github.com/oli-obk/priroda) to get an
+    /// OpTy from a local.
+    pub fn local_to_op_at_frame(
+        &self,
+        local: mir::Local,
+        frame: usize,
+        layout: Option<TyAndLayout<'tcx>>,
+    ) -> InterpResult<'tcx, OpTy<'tcx, M::Provenance>> {
+        let frame_ref = &self.stack()[frame];        
+        let layout = self.layout_of_local(frame_ref, local, layout)?;
+        let op = *frame_ref.locals[local].access()?;
+        if matches!(op, Operand::Immediate(_)) {
+            assert!(!layout.is_unsized());
+        }
+        Ok(OpTy { op, layout })
+    }
+
     /// Read from a local of the current frame.
     /// Will not access memory, instead an indirect `Operand` is returned.
     ///
