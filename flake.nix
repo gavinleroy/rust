@@ -15,37 +15,62 @@
       inherit system overlays;
     };
 
-    wasm-rustc = pkgs.rustBuilder.makeCustomRustToolchain rec {
+    wasm-rustc = pkgs.stdenv.mkDerivation {
       name = "wasm-nightly-2024-05-20";
       src = ./.;
-      buildInputs = with pkgs; [
-        clang
-        ninja
-        cmake
-        python3
-      ];
-      buildPhase = "./x.py install";
-      installPhase = ''
-        rustup toolchain link ${name} build/aarch64-apple-darwin/stage1
-      '';
-    };
-  in {
-    devShell = with pkgs; mkShell {
-      buildInputs = [
-        clang
-        ninja
-        cmake
 
+      nativeBuildInputs = with pkgs; [
         llvmPackages_latest.llvm
         llvmPackages_latest.lld
-
         rust-bin.stable.latest.default
+
+        pkg-config
+        python3
+        cmake
+        ninja
+        clang
+        curl
+        git
       ] ++ lib.optional stdenv.isDarwin [
         darwin.apple_sdk.frameworks.SystemConfiguration
       ];
 
-      RUSTC_LINKER = "${pkgs.llvmPackages.clangUseLLVM}/bin/clang";
+      # TODO: don't think I need these...maybe though
+      buildInputs = with pkgs; [
+        openssl libxml2 zlib
+      ];
+
+      env = {
+        RUSTC_LINKER = "${pkgs.llvmPackages.clangUseLLVM}/bin/clang";
+      };
+
+      dontConfigure = true;
+
+      buildPhase = ''
+        python3 ./x.py install
+      '';
+
+      installPhase = ''
+        mkdir -p $out/bin
+        mkdir -p $out/lib
+        cp -r build/${system}/stage1/* $out/
+        chmod +x $out/bin/*
+      '';
     };
+  in {
+    # devShell = with pkgs; mkShell {
+    #   buildInputs = [
+    #     clang
+    #     ninja
+    #     cmake
+    #     llvmPackages_latest.llvm
+    #     llvmPackages_latest.lld
+    #     rust-bin.stable.latest.default
+    #   ] ++ lib.optional stdenv.isDarwin [
+    #     darwin.apple_sdk.frameworks.SystemConfiguration
+    #   ];
+    #   RUSTC_LINKER = "${pkgs.llvmPackages.clangUseLLVM}/bin/clang";
+    # };
 
     packages = {
       default = wasm-rustc;
