@@ -25,3 +25,6 @@ codegen-backends = ["cranelift"]
 [target.'aarch64-apple-darwin']
 cc = "clang"
 cxx = "clang++"
+
+[llvm]
+download-ci-llvm = false
