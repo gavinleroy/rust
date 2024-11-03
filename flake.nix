@@ -17,19 +17,27 @@
 
     wasm-rustc = pkgs.stdenv.mkDerivation {
       name = "wasm-nightly-2024-05-20";
-      src = ./.;
+      src = pkgs.fetchFromGitHub {
+        owner = "gavinleroy";
+        repo = "rust";
+        rev = "112d9190fe059e062b8d628fa528f9555003a5c3";
+        sha256 = "sha256-5Qb7YdbgEREK9oRQtO63W92pgb3m3L0K/3paAEXQFbA";
+        fetchSubmodules = true;
+        leaveDotGit = true;
+      };
 
       nativeBuildInputs = with pkgs; [
         llvmPackages_latest.llvm
         llvmPackages_latest.lld
+        libiconv
         rust-bin.stable.latest.default
-
         pkg-config
         python3
         cmake
         ninja
         clang
         curl
+        cacert
         git
       ] ++ lib.optional stdenv.isDarwin [
         darwin.apple_sdk.frameworks.SystemConfiguration
@@ -42,35 +50,35 @@
 
       env = {
         RUSTC_LINKER = "${pkgs.llvmPackages.clangUseLLVM}/bin/clang";
+        SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
       };
 
       dontConfigure = true;
 
       buildPhase = ''
-        python3 ./x.py install
+        export CARGO_HOME=$TMP/.cargo/
+        python3 ./x.py build
       '';
 
       installPhase = ''
-        mkdir -p $out/bin
-        mkdir -p $out/lib
-        cp -r build/${system}/stage1/* $out/
-        chmod +x $out/bin/*
+        python3 ./x.py install
+        cp -r build $out/
       '';
     };
   in {
-    # devShell = with pkgs; mkShell {
-    #   buildInputs = [
-    #     clang
-    #     ninja
-    #     cmake
-    #     llvmPackages_latest.llvm
-    #     llvmPackages_latest.lld
-    #     rust-bin.stable.latest.default
-    #   ] ++ lib.optional stdenv.isDarwin [
-    #     darwin.apple_sdk.frameworks.SystemConfiguration
-    #   ];
-    #   RUSTC_LINKER = "${pkgs.llvmPackages.clangUseLLVM}/bin/clang";
-    # };
+    devShell = with pkgs; mkShell {
+      buildInputs = [
+        clang
+        ninja
+        cmake
+        llvmPackages_latest.llvm
+        llvmPackages_latest.lld
+        rust-bin.stable.latest.default
+      ] ++ lib.optional stdenv.isDarwin [
+        darwin.apple_sdk.frameworks.SystemConfiguration
+      ];
+      RUSTC_LINKER = "${pkgs.llvmPackages.clangUseLLVM}/bin/clang";
+    };
 
     packages = {
       default = wasm-rustc;
