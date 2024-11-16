@@ -62,6 +62,7 @@
 
       installPhase = ''
         python3 ./x.py install
+        python3 ./x.py install miri
         cp -r build $out/
       '';
     };
