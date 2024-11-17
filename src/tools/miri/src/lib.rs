@@ -14,7 +14,6 @@
 #![feature(trait_upcasting)]
 #![feature(strict_overflow_ops)]
 #![feature(strict_provenance)]
-#![feature(wasi_ext)]
 // Configure clippy and other lints
 #![allow(
     clippy::collapsible_else_if,
@@ -51,6 +50,7 @@
 )]
 // Needed for rustdoc from bootstrap (with `-Znormalize-docs`).
 #![recursion_limit = "256"]
+#![cfg_attr(target_os = "wasi", feature(wasi_ext))]
 
 // Some "regular" crates we want to share with rustc
 extern crate either;

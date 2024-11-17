@@ -8,12 +8,22 @@
   };
 
   outputs = { self, nixpkgs, flake-utils, rust-overlay }:
-  flake-utils.lib.eachDefaultSystem (system:
+  flake-utils.lib.eachSystem [
+      "x86_64-linux"
+      "aarch64-darwin"
+  ] (system:
   let
     overlays = [ (import rust-overlay) ];
     pkgs = import nixpkgs {
       inherit system overlays;
     };
+
+    rustc-host = if system == "x86_64-linux"
+                 then "x86_64-unknown-linux-gnu"
+                 else
+                   if system == "aarch64-darwin"
+                   then "aarch64-apple-darwin"
+                   else throw "unsupported system ${system}";
 
     wasm-rustc = pkgs.stdenv.mkDerivation {
       name = "wasm-nightly-2024-05-20";
@@ -57,30 +67,29 @@
 
       buildPhase = ''
         export CARGO_HOME=$TMP/.cargo/
-        python3 ./x.py build
+        python3 ./x.py build --host=${rustc-host} --target={rustc-host}
       '';
 
       installPhase = ''
-        python3 ./x.py install
-        python3 ./x.py install miri
-        cp -r build $out/
+        python3 ./x.py install --host=${rustc-host} --target={rustc-host}
+        python3 ./x.py install miri --host=${rustc-host} --target={rustc-host}
+        cp -r build/${rustc-host} $out/
       '';
     };
   in {
-    devShell = with pkgs; mkShell {
-      buildInputs = [
-        clang
-        ninja
-        cmake
-        llvmPackages_latest.llvm
-        llvmPackages_latest.lld
-        rust-bin.stable.latest.default
-      ] ++ lib.optional stdenv.isDarwin [
-        darwin.apple_sdk.frameworks.SystemConfiguration
-      ];
-      RUSTC_LINKER = "${pkgs.llvmPackages.clangUseLLVM}/bin/clang";
-    };
-
+    # devShell = with pkgs; mkShell {
+    #   buildInputs = [
+    #     clang
+    #     ninja
+    #     cmake
+    #     llvmPackages_latest.llvm
+    #     llvmPackages_latest.lld
+    #     rust-bin.stable.latest.default
+    #   ] ++ lib.optional stdenv.isDarwin [
+    #     darwin.apple_sdk.frameworks.SystemConfiguration
+    #   ];
+    #   RUSTC_LINKER = "${pkgs.llvmPackages.clangUseLLVM}/bin/clang";
+    # };
     packages = {
       default = wasm-rustc;
     };
