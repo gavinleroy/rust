@@ -61,35 +61,23 @@
       env = {
         RUSTC_LINKER = "${pkgs.llvmPackages.clangUseLLVM}/bin/clang";
         SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
+        RUST_BACKTRACE = "1";
       };
 
       dontConfigure = true;
 
       buildPhase = ''
         export CARGO_HOME=$TMP/.cargo/
-        python3 ./x.py build --host=${rustc-host} --target={rustc-host}
+        #python3 ./x.py build --host=${rustc-host} --target=${rustc-host}
+        python3 ./x.py install --host=${rustc-host} --target=${rustc-host}
+        python3 ./x.py install miri --host=${rustc-host} --target=${rustc-host}
       '';
 
       installPhase = ''
-        python3 ./x.py install --host=${rustc-host} --target={rustc-host}
-        python3 ./x.py install miri --host=${rustc-host} --target={rustc-host}
         cp -r build/${rustc-host} $out/
       '';
     };
   in {
-    # devShell = with pkgs; mkShell {
-    #   buildInputs = [
-    #     clang
-    #     ninja
-    #     cmake
-    #     llvmPackages_latest.llvm
-    #     llvmPackages_latest.lld
-    #     rust-bin.stable.latest.default
-    #   ] ++ lib.optional stdenv.isDarwin [
-    #     darwin.apple_sdk.frameworks.SystemConfiguration
-    #   ];
-    #   RUSTC_LINKER = "${pkgs.llvmPackages.clangUseLLVM}/bin/clang";
-    # };
     packages = {
       default = wasm-rustc;
     };
