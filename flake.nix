@@ -69,6 +69,7 @@
       buildPhase = ''
         export CARGO_HOME=$TMP/.cargo/
         python3 ./x.py install --host=${rustc-host} --target=${rustc-host}
+        python3 ./x.py dist rust-src rustc-dev --host=${rustc-host} --target=${rustc-host}
         python3 ./x.py build miri cargo-miri --host=${rustc-host} --target=${rustc-host}
       '';
 
