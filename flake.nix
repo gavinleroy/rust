@@ -66,20 +66,23 @@
 
       dontConfigure = true;
 
+      #python3 ./x.py dist rustc-dev --host=${rustc-host} --target=${rustc-host}
       buildPhase = ''
         export CARGO_HOME=$TMP/.cargo/
         python3 ./x.py install --host=${rustc-host} --target=${rustc-host}
-        python3 ./x.py build cargo rustc std miri cargo-miri --host=${rustc-host} --target=${rustc-host}
-        python3 ./x.py dist rustc-dev --host=${rustc-host} --target=${rustc-host}
+        python3 ./x.py build rustc std cargo miri cargo-miri --host=${rustc-host} --target=${rustc-host}
       '';
 
       installPhase = ''
-        mv build/${rustc-host}/stage1/bin $out/
-        mv build/${rustc-host}/stage1/lib $out/
+        mkdir -p $out/bin
+        mkdir -p $out/lib
+        mv build/${rustc-host}/stage1/bin/* $out/bin/
+        mv build/${rustc-host}/stage1/lib/* $out/lib/
+
         mkdir -p $out/lib/rustlib/src/rust/
+        cp Cargo.lock $out/lib/rustlib/src/rust/
         cp -r library $out/lib/rustlib/src/rust/
         cp -r src $out/lib/rustlib/src/rust/
-        cp Cargo.lock $out/lib/rustlib/src/rust/
       '';
     };
   in {
