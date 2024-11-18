@@ -73,16 +73,16 @@
         python3 ./x.py build rustc std cargo miri cargo-miri --host=${rustc-host} --target=${rustc-host}
       '';
 
+
+        # mkdir -p $out/lib/rustlib/src/rust/
+        # cp Cargo.lock $out/lib/rustlib/src/rust/
+        # cp -r library $out/lib/rustlib/src/rust/
+        # cp -r src $out/lib/rustlib/src/rust/
       installPhase = ''
         mkdir -p $out/bin
         mkdir -p $out/lib
-        mv build/${rustc-host}/stage1/bin/* $out/bin/
-        mv build/${rustc-host}/stage1/lib/* $out/lib/
-
-        mkdir -p $out/lib/rustlib/src/rust/
-        cp Cargo.lock $out/lib/rustlib/src/rust/
-        cp -r library $out/lib/rustlib/src/rust/
-        cp -r src $out/lib/rustlib/src/rust/
+        mv build/${rustc-host}/stage1/bin $out/
+        mv build/${rustc-host}/stage1/lib $out/
       '';
     };
   in {
