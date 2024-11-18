@@ -77,8 +77,8 @@
         mv build/${rustc-host}/stage1/bin $out/
         mv build/${rustc-host}/stage1/lib $out/
         mkdir -p $out/lib/rustlib/src/rust/
-        cp -r library mkdir -p $out/lib/rustlib/src/rust/
-        cp -r src mkdir -p $out/lib/rustlib/src/rust/
+        cp -r library $out/lib/rustlib/src/rust/
+        cp -r src $out/lib/rustlib/src/rust/
         cp Cargo.lock $out/lib/rustlib/src/rust/
       '';
     };
