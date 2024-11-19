@@ -31,7 +31,7 @@
         owner = "gavinleroy";
         repo = "rust";
         rev = "9b763a2070f923c7c2fc984ab4d94e476e72aa89";
-        sha256 = "sha256-CsHEsimcP8+MOaKIE5bBM1RFbne0mSpO3mmqayZrbmY=";
+        sha256 = "sha256-ZNuAQ5AkSBkk3aMjejRkcCtoCn+Qu4MYTfNk0UMF/Gg=";
         fetchSubmodules = true;
         leaveDotGit = true;
       };
