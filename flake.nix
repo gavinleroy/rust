@@ -73,6 +73,7 @@
       '';
 
       installPhase = ''
+        mkdir -p $out
         mv dist/* $out/
       '';
     };
