@@ -69,7 +69,7 @@
 
       buildPhase = ''
         export CARGO_HOME=$TMP/.cargo/
-        ./x.py install --stage 1 --host --host ${rustc-host} --target ${rustc-host}
+        ./x.py install --stage 1 --host ${rustc-host} --target ${rustc-host}
       '';
 
       installPhase = ''
