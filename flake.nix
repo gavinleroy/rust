@@ -64,15 +64,13 @@
         RUST_BACKTRACE = "1";
       };
 
-      dontConfigure = true;
-
-      buildPhase = ''
-        export CARGO_HOME=$TMP/.cargo/
-        ./x.py install --stage 1 --host ${rustc-host} --target ${rustc-host}
-      '';
+      #dontConfigure = true;
+      phases = ["unpackPhase" "installPhase"];
 
       installPhase = ''
-        mv dist $out
+        export CARGO_HOME=$TMP/.cargo
+        export DESTDIR=$out
+        python3 x.py install --stage 1 --host ${rustc-host} --target ${rustc-host}
       '';
     };
   in {
