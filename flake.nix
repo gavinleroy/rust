@@ -30,8 +30,8 @@
       src = pkgs.fetchFromGitHub {
         owner = "gavinleroy";
         repo = "rust";
-        rev = "35fb66704c019fdcd6499801cbabdbd038fb674f";
-        sha256 = "sha256-BY3C96p3G1Y5D1lglwxTTSsdcqjaQsga1/2mtqoZe0k=";
+        rev = "daf2ff4ea2eff086c8b8fedf1f97a8d01cf7725e";
+        sha256 = "sha256-+EisNzocztvCus3wVdfD3nplqnDMDCenPVq9pGlVwyI=";
         fetchSubmodules = true;
         leaveDotGit = true;
       };
