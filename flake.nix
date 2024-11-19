@@ -24,15 +24,14 @@
                    if system == "aarch64-darwin"
                    then "aarch64-apple-darwin"
                    else throw "unsupported system ${system}";
-    stage = "stage1";
 
     wasm-rustc = pkgs.stdenv.mkDerivation {
       name = "wasm-nightly-2024-05-20";
       src = pkgs.fetchFromGitHub {
         owner = "gavinleroy";
         repo = "rust";
-        rev = "371844e7d2b4c6f65cfc4ffec14bda5310298a71";
-        sha256 = "sha256-QhctanPi/E3fBaGflEvnguAq35cAjTff14Ky2CzztYE=";
+        rev = "9b763a2070f923c7c2fc984ab4d94e476e72aa89";
+        sha256 = "sha256-CsHEsimcP8+MOaKIE5bBM1RFbne0mSpO3mmqayZrbmY=";
         fetchSubmodules = true;
         leaveDotGit = true;
       };
