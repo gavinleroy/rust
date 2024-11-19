@@ -24,6 +24,7 @@
                    if system == "aarch64-darwin"
                    then "aarch64-apple-darwin"
                    else throw "unsupported system ${system}";
+    stage = "stage1";
 
     wasm-rustc = pkgs.stdenv.mkDerivation {
       name = "wasm-nightly-2024-05-20";
@@ -66,32 +67,13 @@
 
       dontConfigure = true;
 
-      #python3 ./x.py dist rustc-dev --host=${rustc-host} --target=${rustc-host}
       buildPhase = ''
         export CARGO_HOME=$TMP/.cargo/
-        python3 ./x.py install --host=${rustc-host} --target=${rustc-host}
-        python3 ./x.py build rustc std cargo miri cargo-miri --host=${rustc-host} --target=${rustc-host}
+        ./x.py install --stage 1 --host --host ${rustc-host} --target ${rustc-host}
       '';
 
-
       installPhase = ''
-        mkdir -p $out/bin
-        mkdir -p $out/lib
-        mv build/${rustc-host}/stage1/bin $out/
-        mv build/${rustc-host}/stage1/lib $out/
-
-        rm $out/lib/rustlib/src/rust
-        mkdir -p $out/lib/rustlib/src/rust
-
-        rm $out/lib/rustlib/rustc-src/rust
-        mkdir -p $out/lib/rustlib/rustc-src/rust
-
-        cp Cargo.lock $out/lib/rustlib/src/rust/
-        mv library $out/lib/rustlib/src/rust/
-        mv src $out/lib/rustlib/src/rust/
-
-        mv Cargo.lock $out/lib/rustlib/rustc-src/rust/
-        mv compiler $out/lib/rustlib/rustc-src/rust/
+        mv dist/* $out/
       '';
     };
   in {

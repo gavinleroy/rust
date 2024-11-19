@@ -9,7 +9,7 @@ deny-warnings = false
 [build]
 docs = false
 extended = true
-tools = ["rust-src", "rustc-dev", "llvm-tools-preview", "miri"]
+tools = ["cargo", "rustfmt", "rustdoc", "src", "miri", "cargo-miri"]
 host = ["wasm32-wasi", "aarch64-apple-darwin", "x86_64-unknown-linux-gnu"]
 target = ["aarch64-apple-darwin", "x86_64-unknown-linux-gnu"]
 
