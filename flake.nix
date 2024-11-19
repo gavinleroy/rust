@@ -74,15 +74,17 @@
       '';
 
 
-        # mkdir -p $out/lib/rustlib/src/rust/
-        # cp Cargo.lock $out/lib/rustlib/src/rust/
-        # cp -r library $out/lib/rustlib/src/rust/
-        # cp -r src $out/lib/rustlib/src/rust/
       installPhase = ''
         mkdir -p $out/bin
         mkdir -p $out/lib
         mv build/${rustc-host}/stage1/bin $out/
         mv build/${rustc-host}/stage1/lib $out/
+
+        rm $out/lib/rustlib/src/rust
+        mkdir -p $out/lib/rustlib/src/rust
+        cp Cargo.lock $out/lib/rustlib/src/rust/
+        cp -r library $out/lib/rustlib/src/rust/
+        cp -r src $out/lib/rustlib/src/rust/
       '';
     };
   in {
