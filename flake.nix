@@ -82,9 +82,16 @@
 
         rm $out/lib/rustlib/src/rust
         mkdir -p $out/lib/rustlib/src/rust
+
+        rm $out/lib/rustlib/rustc-src/rust
+        mkdir -p $out/lib/rustlib/rustc-src/rust
+
         cp Cargo.lock $out/lib/rustlib/src/rust/
-        cp -r library $out/lib/rustlib/src/rust/
-        cp -r src $out/lib/rustlib/src/rust/
+        mv library $out/lib/rustlib/src/rust/
+        mv src $out/lib/rustlib/src/rust/
+
+        mv Cargo.lock $out/lib/rustlib/rustc-src/rust/
+        mv compiler $out/lib/rustlib/rustc-src/rust/
       '';
     };
   in {
