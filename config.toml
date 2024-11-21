@@ -10,11 +10,12 @@ deny-warnings = false
 docs = false
 extended = true
 tools = [
-  "cargo",
-  "rustfmt",
-  "rustdoc",
-  "clippy",
+  "cargo",  # no-wasm
+  "rustfmt",# no-wasm
+  "rustdoc",# no-wasm
+  "clippy", # no-wasm
   "miri",
+  "src",
   "rustc-dev",
   "llvm-tools",
 ]
