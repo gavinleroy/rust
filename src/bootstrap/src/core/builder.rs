@@ -936,6 +936,7 @@ impl<'a> Builder<'a> {
                 install::Miri,
                 install::LlvmTools,
                 install::Src,
+                install::RustcDev,
             ),
             Kind::Run => describe!(
                 run::BuildManifest,
@@ -1605,7 +1606,8 @@ impl<'a> Builder<'a> {
             Mode::Std | Mode::ToolBootstrap | Mode::ToolStd => {}
             Mode::Rustc | Mode::Codegen | Mode::ToolRustc => {
                 // Build proc macros both for the host and the target
-                if target != compiler.host && cmd != "check" /* @WASMPATCH */ && !target.contains("wasm") {
+                if target != compiler.host && cmd != "check" /* @WASMPATCH */ && !target.contains("wasm")
+                {
                     cargo.arg("-Zdual-proc-macros");
                     rustflags.arg("-Zdual-proc-macros");
                 }
@@ -2268,7 +2270,11 @@ impl<'a> Builder<'a> {
         }
 
         // Only execute if it's supposed to run as default
-        if desc.default && should_run.is_really_default() { self.ensure(step) } else { None }
+        if desc.default && should_run.is_really_default() {
+            self.ensure(step)
+        } else {
+            None
+        }
     }
 
     /// Checks if any of the "should_run" paths is in the `Builder` paths.

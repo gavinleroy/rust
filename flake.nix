@@ -69,8 +69,7 @@
 
       installPhase = ''
         export CARGO_HOME=$TMP/.cargo
-        export DESTDIR=$out
-        python3 x.py install --stage 1 --host ${rustc-host} --target ${rustc-host}
+        python3 x.py install --stage 2 --host ${rustc-host} --target ${rustc-host} --set install.prefix=$out
       '';
     };
   in {

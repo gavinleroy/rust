@@ -9,12 +9,20 @@ deny-warnings = false
 [build]
 docs = false
 extended = true
-tools = ["cargo", "rustfmt", "rustdoc", "clippy", "src", "miri", "cargo-miri"]
+tools = [
+  "cargo",
+  "rustfmt",
+  "rustdoc",
+  "clippy",
+  "miri",
+  "rustc-dev",
+  "llvm-tools",
+]
 host = ["wasm32-wasi", "aarch64-apple-darwin", "x86_64-unknown-linux-gnu"]
 target = ["aarch64-apple-darwin", "x86_64-unknown-linux-gnu"]
 
 [install]
-prefix = "./"
+prefix = "dist"
 sysconfdir = "etc"
 
 [target.'wasm32-wasi']
